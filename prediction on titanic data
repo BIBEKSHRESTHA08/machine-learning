@@ -10,7 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- 1. LOAD DATA ---
+# --- 1. LOAD DATA --
 # Read the CSV files (must be in the same folder as this file)
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
