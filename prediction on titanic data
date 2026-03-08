@@ -1,19 +1,26 @@
+# =============================================================
+# 🚢 Titanic Survival Prediction 
+# Predicts which passengers survived using a Random Forest model
+# Learn: data cleaning, encoding, model training, visualization
+# =============================================================
+
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Load the files (they must be in the same folder as this .py file)
+# --- 1. LOAD DATA ---
+# Read the CSV files (must be in the same folder as this file)
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 print(train_data.head())
 
-# Check missing values BEFORE
+# --- 2. HANDLE MISSING VALUES ---
+# Median is used instead of mean — it's not skewed by outliers
 print("Missing values before:")
 print(train_data[['Age', 'Fare']].isnull().sum())
 
-# Fill missing values with median
 train_data['Age'] = train_data['Age'].fillna(train_data['Age'].median())
 test_data['Age'] = test_data['Age'].fillna(test_data['Age'].median())
 test_data['Fare'] = test_data['Fare'].fillna(test_data['Fare'].median())
@@ -21,7 +28,8 @@ test_data['Fare'] = test_data['Fare'].fillna(test_data['Fare'].median())
 print("\nMissing values after:")
 print(train_data[['Age', 'Fare']].isnull().sum())
 
-# ✅ Plot BEFORE encoding Sex (so chart shows male/female labels)
+# --- 3. VISUALIZE (before encoding, so labels show male/female) ---
+# Bar charts: survival rate by gender and ticket class
 sns.set_theme(style="whitegrid")
 f, ax = plt.subplots(1, 2, figsize=(12, 5))
 sns.barplot(x="Sex", y="Survived", data=train_data, ax=ax[0])
@@ -30,26 +38,31 @@ sns.barplot(x="Pclass", y="Survived", data=train_data, ax=ax[1])
 ax[1].set_title('Survival Rate by Passenger Class')
 plt.show()
 
+# Histogram: age distribution of survivors vs deceased
 plt.figure(figsize=(10, 5))
 sns.histplot(data=train_data, x="Age", hue="Survived", kde=True, element="step")
 plt.title('Age Distribution: Survived vs Deceased')
 plt.show()
 
-# Encode Sex AFTER plotting
+# --- 4. ENCODE TEXT → NUMBERS ---
+# ML models need numbers, not text (male→0, female→1)
 train_data['Sex'] = train_data['Sex'].map({'male': 0, 'female': 1})
 test_data['Sex'] = test_data['Sex'].map({'male': 0, 'female': 1})
 
-# Train model
+# --- 5. TRAIN THE MODEL ---
+# X = inputs, y = correct answers (Survived), X_test = data to predict
 features = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare"]
 X = train_data[features]
 y = train_data["Survived"]
 X_test = test_data[features]
 
+# Random Forest: builds many decision trees and combines their results
 model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
 model.fit(X, y)
 print("Model training complete.")
 
-# Feature importance chart
+# --- 6. FEATURE IMPORTANCE ---
+# Shows which columns the model relied on most to make predictions
 importances = model.feature_importances_
 indices = np.argsort(importances)
 plt.figure(figsize=(10, 5))
@@ -59,7 +72,8 @@ plt.yticks(range(len(indices)), [features[i] for i in indices])
 plt.xlabel('Importance Score')
 plt.show()
 
-# Save predictions
+# --- 7. SAVE PREDICTIONS ---
+# Output a Kaggle-ready CSV with PassengerId and predicted Survived (0 or 1)
 predictions = model.predict(X_test)
 output = pd.DataFrame({'PassengerId': test_data.PassengerId, 'Survived': predictions})
 output.to_csv('my_first_submission.csv', index=False)
